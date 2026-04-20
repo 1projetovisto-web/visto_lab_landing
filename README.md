@@ -1,3 +1,10 @@
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/espera_ao_vivo.webp" alt="VISTO_LAB" width="800" />
+</div>
+<br />
+<div align="center">
+
 <div align="center">
   <img src="visto_motion.gif" alt="VISTO_LAB Movimento Somático" width="800" />
 </div>
