@@ -1,20 +1,13 @@
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+  <img src="visto_motion.gif" alt="VISTO_LAB Movimento Somático" width="800" />
+</div>
+<br />
+<div align="center">
+VISTO_LAB — Landing Page
+Plataforma de arte soberana para artistas digitais brasileiros
+visto.art.br · desenvolvido com vive coding + studio core0gam3
 </div>
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/457645d9-58e5-4742-a0b6-898ad4b9887a
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Sobre o projeto
+Landing page de lançamento da plataforma VISTO_LAB (visto.art.br) — uma iniciativa de soberania digital para artistas que se recusam a depender de algoritmos de big techs para existir e vender seu trabalho.
+A página foi construída com estética terminal/hacker dark, captura de emails para lista de acesso antecipado e estrutura de marketing orientada a conversão (AIDA).
