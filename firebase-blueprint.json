@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "Lead": {
+      "title": "Lead de Ativação",
+      "description": "Dados coletados de interessados no acesso antecipado.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Endereço de e-mail do interessado."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp de criação do registro."
+        },
+        "userAgent": {
+          "type": "string",
+          "description": "Informação do navegador do usuário."
+        },
+        "protocol": {
+          "type": "string",
+          "description": "Versão do protocolo de ativação."
+        }
+      },
+      "required": ["email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Coleção de contatos para o lançamento do VISTO_LAB."
+    }
+  }
+}

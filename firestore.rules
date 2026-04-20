@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    // Validation Blueprint for Lead
+    function isValidLead(data) {
+      return data.keys().hasAll(['email', 'createdAt']) &&
+             data.keys().size() <= 4 &&
+             data.email is string && 
+             data.email.size() >= 5 && 
+             data.email.size() <= 128 &&
+             data.email.matches('.+@.+\\..+') &&
+             data.createdAt == request.time &&
+             (!('userAgent' in data) || (data.userAgent is string && data.userAgent.size() <= 512)) &&
+             (!('protocol' in data) || (data.protocol is string && data.protocol.size() <= 64));
+    }
+
+    // Collection: leads
+    match /leads/{leadId} {
+      // Allow anyone to submit an email
+      allow create: if isValidId(leadId) && isValidLead(incoming());
+      
+      // Strict isolation: nobody can read, update, or delete via client SDK.
+      // This protects collected emails from being harvested.
+      allow read, list, update, delete: if false;
+    }
+  }
+}
