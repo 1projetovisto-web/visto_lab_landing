@@ -3,9 +3,14 @@
 </div>
 
 <br />
+
+
+> **"Diálogos entre a arquitetura do código e a presença somática."**
+> *Projeto contemplado pela PNAB — Edital SEDAC RS nº 26/2024.*
+
  
 VISTO_LAB — Landing Page
-Plataforma de arte soberana para artistas digitais brasileiros
+# 👁️ VISTO_LAB: Intersecção Somática e Programação Criativa
 visto.art.br · desenvolvido com vive coding + studio core0gam3
 </div>
 
