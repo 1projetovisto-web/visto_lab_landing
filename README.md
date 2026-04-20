@@ -1,8 +1,9 @@
 <div align="center">
   <img src="visto_motion.gif" alt="VISTO_LAB Movimento Somático" width="800" />
 </div>
+
 <br />
-<div align="center">
+ 
 VISTO_LAB — Landing Page
 Plataforma de arte soberana para artistas digitais brasileiros
 visto.art.br · desenvolvido com vive coding + studio core0gam3
