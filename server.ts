@@ -59,9 +59,12 @@ async function startServer() {
       }
 
       // 2. Send Email via Resend
+      let emailSent = false;
+      let emailError = null;
+
       if (resend) {
         try {
-          await resend.emails.send({
+          const { data, error } = await resend.emails.send({
             from: 'VISTO_LAB <contato@visto.art.br>',
             to: email,
             subject: 'Protocolo de Ativação - VISTO_LAB',
@@ -84,15 +87,29 @@ async function startServer() {
               </div>
             `
           });
-          console.log(`Email successfully sent to ${email}`);
-        } catch (emailError: any) {
-          console.error("Resend operation failed:", emailError.message);
+          
+          if (error) {
+            emailError = error.message;
+            console.error("Resend API error:", error);
+          } else {
+            emailSent = true;
+            console.log(`Email successfully sent to ${email}`, data);
+          }
+        } catch (err: any) {
+          emailError = err.message;
+          console.error("Resend catch error:", err);
         }
       } else {
+        emailError = "RESEND_API_KEY_MISSING";
         console.warn("RESEND_API_KEY NOT SET - Email not sent.");
       }
 
-      res.status(200).json({ status: "ok", id: docId });
+      res.status(200).json({ 
+        status: "ok", 
+        id: docId, 
+        emailSent,
+        debug: emailError 
+      });
     } catch (error: any) {
       console.error("Subscription process error:", error);
       res.status(500).json({ error: error.message });

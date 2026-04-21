@@ -191,15 +191,20 @@ export default function App() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Server error');
+        const errorData = await response.json().catch(() => ({ error: 'Formato de resposta inválido' }));
+        throw new Error(errorData.error || `Erro do servidor (${response.status})`);
+      }
+
+      const result = await response.json();
+      if (result.status !== 'ok' || (result.debug && !result.emailSent)) {
+        throw new Error(result.debug || 'Falha no processamento do e-mail');
       }
 
       setStatus('success');
-    } catch (error) {
+    } catch (error: any) {
       console.error("Subscription failed:", error);
       setStatus('idle');
-      alert("Falha na ativação. Verifique sua conexão com a rede VISTO ou tente novamente.");
+      alert(`Falha na ativação: ${error.message}. Verifique sua conexão ou tente novamente.`);
     }
   };
 
@@ -225,17 +230,22 @@ export default function App() {
         />
       </div>
 
-      <div className="relative z-10 h-screen w-screen grid grid-cols-1 md:grid-cols-[280px_1fr_300px] grid-rows-[80px_1fr_140px] border border-[#00FF41]/30">
+      <div className="relative z-10 min-h-screen w-full flex flex-col md:grid md:grid-cols-[280px_1fr_300px] md:grid-rows-[80px_1fr_140px] border border-[#00FF41]/30">
         
         {/* LOGO AREA */}
-        <div className="md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 border-b-2 border-[#00FF41] flex items-center justify-center p-4">
+        <div className="w-full md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 border-b-2 border-[#00FF41] flex items-center justify-between md:justify-center p-4">
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-2xl font-black tracking-[0.3em] neon-text"
+            className="text-xl md:text-2xl font-black tracking-[0.3em] neon-text"
           >
             VISTO_LAB
           </motion.div>
+          
+          <div className="md:hidden flex items-center gap-4">
+             <div className="w-2 h-2 bg-[#00FF41] animate-pulse" />
+             <span className="text-[9px] uppercase tracking-widest text-[#00FF41]">Sistema Ativo</span>
+          </div>
         </div>
 
         {/* HEADER MAIN */}
@@ -277,14 +287,14 @@ export default function App() {
         </div>
 
         {/* CONTENT AREA (Middle) */}
-        <div className="col-start-1 md:col-start-2 col-end-2 md:col-end-3 row-start-2 row-end-3 overflow-y-auto border-b md:border-b-0 border-[#00FF41]/30">
+        <div className="flex-1 md:col-start-2 md:col-end-3 md:row-start-2 md:row-end-3 overflow-y-auto border-b md:border-b-0 border-[#00FF41]/30">
           
           {/* HERO SECTION */}
-          <section className="min-h-[calc(100vh-80px-140px)] flex flex-col justify-center p-6 md:p-14 border-b border-[#00FF41]/10">
+          <section className="min-h-[60vh] md:min-h-[calc(100vh-80px-140px)] flex flex-col justify-center p-6 md:p-14 border-b border-[#00FF41]/10">
             <motion.span 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[10px] text-[#00FF41] block mb-4 tracking-[0.3em] uppercase"
+              className="text-[9px] md:text-[10px] text-[#00FF41] block mb-4 tracking-[0.3em] uppercase"
             >
               Manifesto 01.0 // Protocol: Somatic
             </motion.span>
@@ -292,7 +302,7 @@ export default function App() {
             <motion.h1 
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] uppercase tracking-tighter"
+              className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] uppercase tracking-tighter"
             >
               A INTERFACE <br/>
               <span className="neon-text">É O SEU CORPO</span>
@@ -301,12 +311,18 @@ export default function App() {
             <motion.p 
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
-              className="mt-8 text-sm md:text-base text-white/40 max-w-lg leading-relaxed uppercase"
+              className="mt-6 md:mt-8 text-xs md:text-base text-white/40 max-w-lg leading-relaxed uppercase"
             >
               Não somos usuários. Somos componentes ativos de uma infraestrutura nervosa em expansão. O VISTO_LAB rompe a tela.
             </motion.p>
+            
+            {/* Mobile-only status teaser */}
+            <div className="md:hidden mt-8 border-l-2 border-[#00FF41] pl-4 py-2 space-y-1">
+               <span className="text-[10px] text-[#00FF41]/60 uppercase block">Ativação pendente</span>
+               <div className="text-xl font-bold tracking-tighter"><Countdown /></div>
+            </div>
 
-            <div className="mt-12 max-w-md w-full">
+            <div className="mt-10 md:mt-12 max-w-md w-full">
               {status === 'success' ? (
                 <div className="border border-[#00FF41] p-6 text-[#00FF41] bg-[#00FF41]/10 text-center uppercase text-xs tracking-widest">
                   Acesso garantido. Aguarde protocolo de sincronização.
