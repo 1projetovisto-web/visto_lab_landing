@@ -83,7 +83,7 @@ export const handler: Handler = async (event) => {
                 <li>Protocolos de Objetos Digitais Interativos</li>
               </ul>
               <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; font-size: 11px; color: #008f25;">
-                SISTEMA VISTO_LAB // REDE SOMÁTICA // 2024<br/>
+                SISTEMA VISTO_LAB // REDE SOMÁTICA-DIGITAL // 2026<br/>
                 FIM DA TRANSMISSÃO.
               </div>
             </div>
