@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/espera_ao_vivo.webp" alt="VISTO_LAB" width="800" />
+  <img src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/espera_ao_vivo%20(1).webp" alt="VISTO_LAB" width="800" />
 </div>
 <br />
 
@@ -8,7 +8,7 @@
 # VISTO_LAB — Landing Page
 
 **Plataforma de arte soberana para artistas digitais brasileiros**
-`lab.visto.art.br` · desenvolvido  [studio core0gam3](https://github.com/core0gam3)
+`lab.visto.art.br` · desenvolvido com [vive coding](https://github.com/vivecoding) + [studio core0gam3](https://github.com/core0gam3)
 
 ![Deploy](https://img.shields.io/badge/deploy-netlify-00C7B7?style=flat-square)
 ![Firebase](https://img.shields.io/badge/database-firebase-FFCA28?style=flat-square)
@@ -20,7 +20,7 @@
 
 ## Sobre o projeto
 
-Landing page de lançamento da plataforma **VISTO_LAB** (`visto.art.br`) .
+Landing page de lançamento da plataforma **VISTO_LAB** (`visto.art.br`) — uma iniciativa de soberania digital para artistas que se recusam a depender de algoritmos de big techs para existir e vender seu trabalho.
 
 A página foi construída com estética **terminal/hacker dark**, captura de emails via Firebase Firestore e estrutura de marketing orientada a conversão (AIDA).
 
@@ -139,7 +139,7 @@ cadeira.visto.art.br      → workshops e tutoriais
 
 ## Créditos
 
-Desenvolvido com **vibe coding** + **studio core0gam3**
+Desenvolvido com **vive coding** + **studio core0gam3**
 
 ---
 
@@ -148,4 +148,3 @@ Desenvolvido com **vibe coding** + **studio core0gam3**
 `VISTO_LAB © 2026` · `visto.art.br` · Arte soberana, sem algoritmo no meio.
 
 </div>
-
