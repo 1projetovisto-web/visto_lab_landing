@@ -1,9 +1,6 @@
-div align="center">
-  <img src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/espera_ao_vivo%20(1).webp" alt="VISTO_LAB" width="400" />
-</div>
-<br />
-
 <div align="center">
+  <img src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/espera_ao_vivo.webp" alt="VISTO_LAB" width="400" />
+</div>
 
 # VISTO_LAB — Landing Page
 
