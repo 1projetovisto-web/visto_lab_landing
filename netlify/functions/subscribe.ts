@@ -102,12 +102,46 @@ export const handler: Handler = async (event) => {
       emailError = "RESEND_API_KEY_MISSING";
     }
 
+    // 3. Sync to Brevo (Optional/Automation)
+    let brevoStatus = "skipped";
+    if (process.env.BREVO_API_KEY) {
+      try {
+        const brevoResponse = await fetch("https://api.brevo.com/v3/contacts", {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "api-key": process.env.BREVO_API_KEY,
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            email,
+            updateEnabled: true,
+            listIds: process.env.BREVO_LIST_ID ? [parseInt(process.env.BREVO_LIST_ID)] : [2], // Lista padrão ou vinda do env
+            attributes: {
+              FNAME: email.split('@')[0], // Nome genérico a partir do email
+              SOURCE: "VISTO_LAB_LANDING"
+            }
+          })
+        });
+        
+        if (brevoResponse.ok) {
+          brevoStatus = "success";
+        } else {
+          const brevoErr = await brevoResponse.json();
+          brevoStatus = `error: ${brevoErr.message || brevoResponse.statusText}`;
+        }
+      } catch (err: any) {
+        brevoStatus = `exception: ${err.message}`;
+      }
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({ 
         status: "ok", 
         id: docId, 
         emailSent,
+        brevoSync: brevoStatus,
         debug: emailError 
       }),
     };
