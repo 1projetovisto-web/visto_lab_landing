@@ -35,7 +35,7 @@ export default async function handler(req: any, res: any) {
         protocol: 'SOMATIC_ACTIVATION_V4_VERCEL'
       });
       docId = docRef.id;
-    } // <--- AQUI ESTAVA O ERRO: FALTAVA FECHAR ESTA CHAVE!
+    }
 
     // 2. ENVIA E-MAIL DE BOAS-VINDAS (Resend)
     if (resend) {
@@ -47,15 +47,27 @@ export default async function handler(req: any, res: any) {
         <div style="background-color: #050505; color: #00FF41; font-family: 'Courier New', Courier, monospace; padding: 40px; border: 2px solid #00FF41; line-height: 1.6;">
           <h2 style="text-transform: uppercase; letter-spacing: 0.3em; border-bottom: 1px solid #00FF41; padding-bottom: 10px;">VISTO_LAB</h2>
           <p style="font-weight: bold; text-transform: uppercase;">PROTOCOLO DE SINCRONIZAÇÃO INICIALIZADO</p>
+          
           <p>Seu e-mail [${email}] foi integrado à nossa rede de ativação.</p>
+          
           <p>Este é o primeiro passo para o acesso à plataforma <a href="https://visto.art.br" style="color: #00FF41; text-decoration: underline;">VISTO.ART.BR</a>.</p>
+          
           <p>Em breve enviaremos as coordenadas para:</p>
+          
           <ul style="list-style-type: none; padding-left: 0;">
             <li>> Workshops de código aberto</li>
             <li>> Acesso à Galeria de Arte Digital</li>
             <li>> Protocolos de Objetos Digitais Interativos</li>
           </ul>
-          <div style="margin-top: 40px; font-size: 10px; opacity: 0.7; border-top: 1px solid #333; padding-top: 20px;">
+
+          <div style="margin-top: 50px; text-align: center; border-top: 1px solid #00FF41; padding-top: 30px;">
+            <p style="font-size: 8px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; color: #00FF41; opacity: 0.6;">Apoio e Realização</p>
+            <img src="https://lab.visto.art.br/regua-patrocinadores-green.png" 
+                 alt="Institucional VISTO_LAB" 
+                 style="width: 100%; max-width: 450px; height: auto; opacity: 0.9; display: inline-block;">
+          </div>
+
+          <div style="margin-top: 40px; font-size: 10px; opacity: 0.5; border-top: 1px solid #1a1a1a; padding-top: 20px;">
             SISTEMA VISTO_LAB // REDE SOMÁTICA-DIGITAL // 2026<br>
             FIM DA TRANSMISSÃO.
           </div>
