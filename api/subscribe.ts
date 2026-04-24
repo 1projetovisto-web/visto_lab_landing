@@ -61,13 +61,19 @@ export default async function handler(req: any, res: any) {
           </ul>
 
           <div style="margin-top: 50px; text-align: center; border-top: 1px solid #00FF41; padding-top: 30px;">
-            <p style="font-size: 8px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; color: #00FF41; opacity: 0.6;">Apoio e Realização</p>
-            <img src="https://lab.visto.art.br/regua-patrocinadores-green.png" 
-                 alt="Institucional VISTO_LAB" 
-                 style="width: 100%; max-width: 450px; height: auto; opacity: 0.9; display: inline-block;">
+            <p style="font-size: 8px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 25px; color: #00FF41; opacity: 0.6;">Apoio e Realização</p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+              <tr>
+                <td align="center">
+                  <img src="https://lab.visto.art.br/regua-patrocinadores-green.png" 
+                       alt="Institucional VISTO_LAB" 
+                       style="display: block; width: 100%; height: auto; opacity: 0.9; max-width: 600px;">
+                </td>
+              </tr>
+            </table>
           </div>
 
-          <div style="margin-top: 40px; font-size: 10px; opacity: 0.5; border-top: 1px solid #1a1a1a; padding-top: 20px;">
+          <div style="margin-top: 40px; font-size: 11px; opacity: 0.5; border-top: 1px solid #1a1a1a; padding-top: 20px;">
             SISTEMA VISTO_LAB // REDE SOMÁTICA-DIGITAL // 2026<br>
             FIM DA TRANSMISSÃO.
           </div>
