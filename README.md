@@ -5,9 +5,9 @@
 # VISTO_LAB — Landing Page
 
 **Plataforma de arte soberana para artistas digitais brasileiros**
-`lab.visto.art.br` · desenvolvido com [vive coding](https://github.com/vivecoding) + [studio core0gam3](https://github.com/core0gam3)
+`lab.visto.art.br` · desenvolvido com [vibe coding + [studio core0gam3] 
 
-![Deploy](https://img.shields.io/badge/deploy-netlify-00C7B7?style=flat-square)
+![Deploy](https://img.shields.io/badge/deploy-vercel-00C7B7?style=flat-square)
 ![Firebase](https://img.shields.io/badge/database-firebase-FFCA28?style=flat-square)
 ![Status](https://img.shields.io/badge/status-live-C8F135?style=flat-square)
 
@@ -136,13 +136,13 @@ cadeira.visto.art.br      → workshops e tutoriais
 
 ## Créditos
 
-Desenvolvido com **vive coding** + **studio core0gam3**
+Desenvolvido com **vibe coding** + **studio core0gam3**
 
 ---
 
 <div align="center">
 
-`VISTO_LAB © 2026` · `visto.art.br` · Arte soberana, sem algoritmo no meio.
+`VISTO_LAB © 2026` · `visto.art.br` .
 
 </div>
 
