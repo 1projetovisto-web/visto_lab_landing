@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/espera_ao_vivo.webp" alt="VISTO_LAB" width="400" />
+  <img src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/favicon.png" alt="VISTO_LAB" width="300" />
 </div>
 
 # VISTO_LAB — Landing Page
