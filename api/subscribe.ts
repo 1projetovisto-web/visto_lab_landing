@@ -60,14 +60,13 @@ export default async function handler(req: any, res: any) {
             <li>> Protocolos de Objetos Digitais Interativos</li>
           </ul>
 
-          <div style="margin-top: 50px; text-align: center; border-top: 1px solid #00FF41; padding-top: 30px;">
-            <p style="font-size: 8px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; color: #00FF41; opacity: 0.6;">Apoio e Realização</p>
+         <div style="margin-top: 50px; text-align: center; border-top: 1px solid #00FF41; padding-top: 20px;">
             
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse: collapse;">
               <tr>
                 <td align="center" style="font-size: 0; line-height: 0;">
                   <img src="https://lab.visto.art.br/regua-patrocinadores-green.png" 
-                       alt="Institucional VISTO_LAB" 
+                       alt="Apoio e Realização VISTO_LAB" 
                        width="600"
                        style="display: block; width: 100%; height: auto; border: 0; opacity: 0.9; pointer-events: none;">
                 </td>
