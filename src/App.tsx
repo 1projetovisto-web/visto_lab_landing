@@ -67,7 +67,7 @@ const CustomCursor = () => {
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (target.closest("button, a, input")) {
+      if (target.closest("button, a, input, .interactive-cursor")) {
         setIsHovering(true);
       } else {
         setIsHovering(false);
@@ -1394,11 +1394,18 @@ const InteractiveFeatureCard = ({
   );
 };
 
+import Lantern from "./Lantern";
+import InteractiveText from "./InteractiveText";
+
 export default function App() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [activeTensionIndex, setActiveTensionIndex] = useState(0);
   const sidebarMouseRef = useRef({ x: -1000, y: -1000 });
+
+  if (window.location.pathname === "/lantern") {
+    return <Lantern />;
+  }
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -1603,37 +1610,6 @@ export default function App() {
                 text={`VOCÊ NÃO É O USUÁRIO\n\nVOCÊ É O INPUT\n\nO SISTEMA\nJÁ ESTÁ EM EXECUÇÃO\n\n// VISTO_LAB`}
               />
             </motion.div>
-
-            <div className="mt-10 md:mt-12 max-w-md w-full">
-              {status === "success" ? (
-                <div className="border border-[#00FF41] p-6 text-[#00FF41] bg-[#00FF41]/10 text-center uppercase text-xs tracking-widest">
-                  Acesso garantido. Aguarde protocolo de sincronização.
-                </div>
-              ) : (
-                <form
-                  onSubmit={handleSubscribe}
-                  className="flex flex-col border border-[#00FF41] bg-black/50 hover:shadow-[0_0_15px_rgba(0,255,65,0.1)] transition-shadow"
-                >
-                  <input
-                    type="email"
-                    placeholder="DIGITE SEU ACESSO (EMAIL)"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="p-5 bg-transparent outline-none border-b border-[#00FF41]/30 focus:bg-[#00FF41]/5 transition-colors uppercase text-sm"
-                  />
-                  <button
-                    type="submit"
-                    disabled={status === "loading"}
-                    className="p-5 bg-[#00FF41] text-black font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all disabled:opacity-50"
-                  >
-                    {status === "loading"
-                      ? "Processando..."
-                      : "Entrar na ativação"}
-                  </button>
-                </form>
-              )}
-            </div>
           </section>
 
           {/* TENSION / MARQUEE SECTION */}
@@ -1720,21 +1696,40 @@ export default function App() {
           </section>
 
           {/* FINAL CTA SECTION */}
-          <section className="py-32 px-6 md:px-14 text-center">
-            <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-8 italic">
-              VOCÊ ESTÁ PRONTO PARA SER VISTO?
-            </h2>
-            <div className="max-w-xs mx-auto">
-              <button
-                onClick={() =>
-                  document
-                    .querySelector("form")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
-                className="w-full p-5 bg-[#00FF41] text-black font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all shadow-[0_0_20px_rgba(0,255,65,0.3)]"
-              >
-                Reclamar Acesso
-              </button>
+          <section id="cta-section" className="py-32 px-6 md:px-14 text-center">
+            <InteractiveText 
+              text="VOCÊ ESTÁ PRONTO PARA SER VISTO?"
+              className="text-4xl md:text-5xl font-black uppercase tracking-tighter mb-8 italic text-white/90"
+            />
+            <div className="max-w-md w-full mx-auto mt-8">
+              {status === "success" ? (
+                <div className="border border-[#00FF41] p-6 text-[#00FF41] bg-[#00FF41]/10 text-center uppercase text-xs tracking-widest">
+                  Acesso garantido. Aguarde protocolo de sincronização.
+                </div>
+              ) : (
+                <form
+                  onSubmit={handleSubscribe}
+                  className="flex flex-col border border-[#00FF41] bg-black/50 hover:shadow-[0_0_15px_rgba(0,255,65,0.1)] transition-shadow"
+                >
+                  <input
+                    type="email"
+                    placeholder="DIGITE SEU ACESSO (EMAIL)"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="p-5 bg-transparent outline-none border-b border-[#00FF41]/30 text-[#00FF41] focus:bg-[#00FF41]/5 transition-colors uppercase text-sm text-center"
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === "loading"}
+                    className="p-5 bg-[#00FF41] text-black font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all disabled:opacity-50"
+                  >
+                    {status === "loading"
+                      ? "Processando..."
+                      : "Estabelecer Conexão"}
+                  </button>
+                </form>
+              )}
             </div>
           </section>
         </div>
