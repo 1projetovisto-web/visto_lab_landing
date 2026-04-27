@@ -1372,8 +1372,7 @@ const InteractiveFeatureCard = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseMove={handleMouseMove}
-      className={`group relative bg-[#050505] p-8 space-y-4 overflow-hidden border border-[#00FF41]/10 transition-all duration-300 
-      hover:border-[#00FF41]/40 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(0,255,65,0.15)] z-10 hover:z-20`}
+      className={`group relative bg-[#050505] p-8 space-y-4 overflow-hidden border border-[#00FF41]/10 transition-all duration-300 \n      hover:border-[#00FF41]/40 hover:-translate-y-1 hover:shadow-[0_0_15px_rgba(0,255,65,0.15)] z-10 hover:z-20`}
     >
       <AtmosphericCanvas
         isHovered={isHovered}
@@ -1394,8 +1393,237 @@ const InteractiveFeatureCard = ({
   );
 };
 
-import Lantern from "./Lantern";
-import InteractiveText from "./InteractiveText";
+// --- Inlined Components to prevent Vercel Import Errors ---
+
+function Lantern() {
+  useEffect(() => {
+    const chars = "01VISTOLAB<>[]{}/\\|!@#$%&*+=-_~^";
+    const container = document.getElementById('ascii-container');
+    
+    if (container) {
+      let asciiString = "";
+      const iterations = 15000;
+      for (let i = 0; i < iterations; i++) {
+          asciiString += chars[Math.floor(Math.random() * chars.length)];
+      }
+      container.textContent = asciiString;
+
+      const handleMove = (e: MouseEvent) => {
+          const x = e.clientX;
+          const y = e.clientY;
+          container.style.webkitMaskImage = `radial-gradient(circle 350px at ${x}px ${y}px, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)`;
+          container.style.maskImage = `radial-gradient(circle 350px at ${x}px ${y}px, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)`;
+      };
+      
+      const handleTouch = (e: TouchEvent) => {
+          if(e.touches.length > 0) {
+              const x = e.touches[0].clientX;
+              const y = e.touches[0].clientY;
+              container.style.webkitMaskImage = `radial-gradient(circle 350px at ${x}px ${y}px, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)`;
+              container.style.maskImage = `radial-gradient(circle 350px at ${x}px ${y}px, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 95%)`;
+          }
+      };
+
+      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('touchmove', handleTouch);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('touchmove', handleTouch);
+      };
+    }
+  }, []);
+
+  return (
+    <div className="fixed inset-0 w-full h-full bg-black overflow-hidden cursor-crosshair z-50">
+      <div 
+        id="ascii-container"
+        className="absolute inset-0 w-full h-full text-[#00FF41] text-base leading-relaxed break-all select-none opacity-80"
+        style={{
+          letterSpacing: '0.5em',
+          textTransform: 'uppercase',
+          textShadow: '0 0 10px rgba(0, 255, 65, 0.5)',
+          WebkitMaskImage: 'radial-gradient(circle 350px at 50% 50%, black 40%, transparent 95%)',
+          maskImage: 'radial-gradient(circle 350px at 50% 50%, black 40%, transparent 95%)',
+          fontFamily: 'monospace'
+        }}
+      />
+    </div>
+  );
+}
+
+interface InteractiveTextProps {
+  text: string;
+  className?: string;
+}
+
+function InteractiveText({ text, className = '' }: InteractiveTextProps) {
+  const containerRef = useRef<HTMLHeadingElement>(null);
+  const lettersRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const mouseRef = useRef({ x: -1000, y: -1000 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('touchmove', handleTouchMove);
+
+    let animationFrameId: number;
+    const textLength = text.replace(/\\s+/g, '').length;
+    
+    const states = Array.from({ length: textLength }).map(() => ({
+      x: 0,
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+      vx: 0,
+      vy: 0,
+      baseOffsetX: (Math.random() - 0.5) * 2,
+      baseOffsetY: (Math.random() - 0.5) * 2,
+    }));
+
+    const render = () => {
+      if (!containerRef.current || states.length === 0) return;
+      
+      const mouseX = mouseRef.current.x;
+      const mouseY = mouseRef.current.y;
+      
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const centerX = containerRect.left + containerRect.width / 2;
+      const centerY = containerRect.top + containerRect.height / 2;
+      
+      const containerDx = mouseX - centerX;
+      const containerDy = mouseY - centerY;
+      const containerDist = Math.sqrt(containerDx * containerDx + containerDy * containerDy);
+      
+      // Proximidade global (aumentar espaçamento geral)
+      const maxContainerDist = 500;
+      let trackingScalar = 0;
+      if (containerDist < maxContainerDist) {
+        trackingScalar = Math.pow((maxContainerDist - containerDist) / maxContainerDist, 2);
+      }
+
+      const maxLetterDist = 250;
+
+      let validIndex = 0;
+
+      lettersRef.current.forEach((letter) => {
+        if (!letter) return;
+        
+        const state = states[validIndex];
+        if (!state) return;
+        validIndex++;
+
+        const rect = letter.getBoundingClientRect();
+        // Calculate center of the original layout position, not the current transformed position
+        const letterX = rect.left - state.x + rect.width / 2;
+        const letterY = rect.top - state.y + rect.height / 2;
+        
+        const dx = mouseX - letterX;
+        const dy = mouseY - letterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        let pushX = 0;
+        let pushY = 0;
+        let jitterX = 0;
+        let jitterY = 0;
+
+        // 1. Comportamento com a Presença (Repulsão magnética e instabilidade local)
+        if (distance < maxLetterDist) {
+          const force = Math.pow((maxLetterDist - distance) / maxLetterDist, 2);
+          
+          // Repulsão calculada diretamente para afastar da posição do mouse
+          const angle = Math.atan2(dy, dx);
+          pushX = -Math.cos(angle) * force * 15; // Efeito menos tímido
+          pushY = -Math.sin(angle) * force * 8;
+          
+          // Micro instabilidade nervosa SOMENTE quando o mouse está perto
+          jitterX = (Math.random() - 0.5) * force * 2;
+          jitterY = (Math.random() - 0.5) * force * 2;
+        }
+
+        // 2. Tracking Dinâmico (afastamento do centro)
+        const offsetFromCenterX = letterX - centerX;
+        const fauxTrackingX = offsetFromCenterX * trackingScalar * 0.15; // Mais notável
+
+        state.targetX = pushX + jitterX + fauxTrackingX;
+        state.targetY = pushY + jitterY;
+
+        // 3. Inércia (Ajustada para remover a sensação de "barco")
+        const spring = 0.08;   // Mais ágil e responsivo
+        const friction = 0.82; // Menor fricção para assentar mais rápido
+
+        
+        state.vx += (state.targetX - state.x) * spring;
+        state.vy += (state.targetY - state.y) * spring;
+        
+        state.x += state.vx;
+        state.y += state.vy;
+        
+        state.vx *= friction;
+        state.vy *= friction;
+        
+        letter.style.transform = `translate3d(${state.x}px, ${state.y}px, 0)`;
+
+        // 5. Glow dinâmico
+        if (distance < maxLetterDist * 0.6) {
+            const glow = Math.pow((maxLetterDist * 0.6 - distance) / (maxLetterDist * 0.6), 2);
+            letter.style.textShadow = `0 0 ${glow * 15}px rgba(0, 255, 65, ${glow * 0.8})`;
+        } else {
+            letter.style.textShadow = 'none';
+        }
+      });
+      
+      animationFrameId = requestAnimationFrame(render);
+    };
+    
+    render();
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('touchmove', handleTouchMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [text]);
+
+  const words = text.split(' ');
+  let flatIndex = 0;
+
+  return (
+    <h2 
+      ref={containerRef} 
+      className={className} 
+      style={{ display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.25em' }}
+    >
+      {words.map((word, wordIndex) => (
+        <span key={wordIndex} style={{ display: 'inline-flex', whiteSpace: 'nowrap' }}>
+          {word.split('').map((char, charIndex) => {
+            const currentIndex = flatIndex++;
+            return (
+              <span
+                key={currentIndex}
+                ref={(el) => {
+                  lettersRef.current[currentIndex] = el;
+                }}
+                style={{ display: 'inline-block', willChange: 'transform, text-shadow' }}
+              >
+                {char}
+              </span>
+            );
+          })}
+        </span>
+      ))}
+    </h2>
+  );
+}
 
 export default function App() {
   const [email, setEmail] = useState("");
