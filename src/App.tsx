@@ -1749,7 +1749,7 @@ export default function App() {
         {/* SUBTITLE AREA (CENTER) */}
         <div className="hidden md:flex col-start-2 col-end-3 row-start-1 row-end-2 min-w-0 border-b border-[#00FF41] items-center justify-center bg-[#00FF41]/10 px-8">
           <div className="text-sm md:text-base lg:text-lg uppercase tracking-[0.25em] text-[#00FF41] font-black whitespace-nowrap drop-shadow-[0_0_10px_rgba(0,255,65,0.2)] text-center max-w-[90%] overflow-hidden text-ellipsis">
-            Plataforma experimental de operações digitais-somáticas
+            Plataforma experimental de práticas digitais-somáticas
           </div>
         </div>
 
