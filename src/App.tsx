@@ -12,6 +12,9 @@ import {
   useRef,
   RefObject,
 } from "react";
+import p5 from "p5";
+import { SelfieSegmentation } from "@mediapipe/selfie_segmentation";
+import { Camera } from "@mediapipe/camera_utils";
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
 import {
   ArrowRight,
@@ -654,10 +657,10 @@ const VideoMonitor = () => {
 
   return (
     <div className="relative w-full max-w-2xl mx-auto group">
-      {/* Moldura do Monitor */}
-      <div className="absolute -inset-4 border-2 border-[#00FF41]/10 rounded-sm pointer-events-none group-hover:border-[#00FF41]/30 transition-colors duration-700" />
+      {/* Moldura do Monitor - Sempre Ativa */}
+      <div className="absolute -inset-4 border-2 border-[#00FF41]/60 rounded-sm pointer-events-none transition-colors duration-700" />
 
-      <div className="crt-screen aspect-video relative overflow-hidden bg-black shadow-[0_0_50px_rgba(0,255,65,0.1)]">
+      <div className="crt-screen aspect-video relative overflow-hidden bg-black shadow-[0_0_80px_rgba(0,255,65,0.4)]">
         <InteractiveVideoSurface isMuted={isMuted} />
 
         {/* Static noise overlay */}
@@ -690,6 +693,353 @@ const VideoMonitor = () => {
             <Volume2 className="w-4 h-4" />
           )}
         </button>
+      </div>
+    </div>
+  );
+};
+
+const SomaticTypeMonitor = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isActive, setIsActive] = useState(false);
+  const [isSystemLoading, setIsSystemLoading] = useState(false);
+  const p5Instance = useRef<p5 | null>(null);
+
+  useEffect(() => {
+    if (!isActive || !containerRef.current) return;
+
+    setIsSystemLoading(true);
+
+    const sketch = (s: p5) => {
+      let video: p5.Element;
+      let selfieSeg: any;
+      let cameraModule: any;
+      let mascara: any;
+      let bufferCanvas: HTMLCanvasElement;
+      let bufferCtx: CanvasRenderingContext2D | null;
+      let prevPixels: Uint8ClampedArray | null = null;
+      let motionPixels: Float32Array = new Float32Array(128 * 96);
+      let stablePresenceBuffer: Float32Array = new Float32Array(128 * 96); 
+      
+      const textoVisto = "OBJETOS DIGITAIS INTERATIVOS DE CÓDIGO ABERTO. SISTEMAS EM CIRCULAÇÃO PARA CRIAÇÃO, INTERAÇÃO E DESVIO. VISTO.ART.BR_P015";
+      let chars: any[] = [];
+      const baseFontSize = 21; 
+      const lineHeight = 1.35;
+      const letterSpacingBase = 1.05; 
+      const wordSpacingExtra = 4;
+
+      s.setup = () => {
+        const target = containerRef.current!;
+        const canvas = s.createCanvas(target.clientWidth, target.clientHeight);
+        canvas.parent(target);
+
+        s.textFont('Inter, sans-serif');
+        s.textStyle(s.BOLD);
+        s.textSize(baseFontSize);
+        
+        gerarLayoutTipografico();
+
+        // Capture video
+        video = s.createCapture(s.VIDEO, () => {
+          // Video loaded
+        });
+        video.size(640, 480);
+        video.hide();
+
+        // Buffer for mask reading - Increased resolution for better limb/hand tracking
+        bufferCanvas = document.createElement('canvas');
+        bufferCanvas.width = 128;
+        bufferCanvas.height = 96;
+        bufferCtx = bufferCanvas.getContext('2d', { willReadFrequently: true });
+
+        // Initialize MediaPipe
+        selfieSeg = new SelfieSegmentation({
+          locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+        });
+
+        selfieSeg.setOptions({ 
+          modelSelection: 1, // Keep model 1 for higher accuracy on silhouettes
+          selfieMode: false 
+        });
+        selfieSeg.onResults((results: any) => {
+          mascara = results.segmentationMask;
+          if (setIsSystemLoading) setIsSystemLoading(false);
+        });
+
+        cameraModule = new Camera((video.elt as HTMLVideoElement), {
+          onFrame: async () => {
+            if (selfieSeg) {
+              await selfieSeg.send({ image: (video.elt as HTMLVideoElement) });
+            }
+          },
+          width: 640,
+          height: 480
+        });
+        cameraModule.start();
+      };
+
+      s.draw = () => {
+        s.background(0);
+
+        // 1. WEBCAM REAL: Imagem bruta espelhada
+        if (video && (video.elt as HTMLVideoElement).readyState >= 2) {
+          s.push();
+          s.translate(s.width, 0);
+          s.scale(-1, 1);
+          s.tint(255, 160); // Slightly more transparency to help black text pop
+          s.image(video, 0, 0, s.width, s.height);
+          s.pop();
+        }
+
+        if (!mascara || !bufferCtx) return;
+
+        // 2. Process Mask in Buffer
+        bufferCtx.clearRect(0, 0, 128, 96);
+        bufferCtx.drawImage(mascara, 0, 0, 128, 96);
+        const currentPixels = bufferCtx.getImageData(0, 0, 128, 96).data;
+
+        // 2.1 TEMPORAL INPUT STABILIZATION (Aggressive EMA Filter)
+        // Eliminates segmentation flicker before it reaches the visual system
+        for (let i = 0; i < currentPixels.length; i += 4) {
+          const idx = i / 4;
+          const newVal = currentPixels[i] / 255;
+          // 85% history / 15% new frame = Ultra-stable, noise-free signal
+          stablePresenceBuffer[idx] = (stablePresenceBuffer[idx] * 0.85) + (newVal * 0.15);
+        }
+
+        // 3. Motion Detection with Strict Noise Gate
+        if (prevPixels) {
+          for (let i = 0; i < currentPixels.length; i += 4) {
+            const idx = i / 4;
+            const diff = Math.abs(currentPixels[i] - prevPixels[i]) / 255;
+            
+            // Critical: Higher deadzone (0.2) to ignore sensor noise and compression artifacts
+            const cleanMotion = diff > 0.22 ? diff : 0; 
+            
+            if (motionPixels[idx] !== undefined) {
+              if (cleanMotion > motionPixels[idx]) {
+                motionPixels[idx] = s.lerp(motionPixels[idx], cleanMotion, 0.4); 
+              } else {
+                motionPixels[idx] = s.lerp(motionPixels[idx], 0, 0.08); // Steady return to zero when stopped
+              }
+            }
+          }
+        }
+        prevPixels = new Uint8ClampedArray(currentPixels);
+
+        s.noStroke();
+        s.textAlign(s.CENTER, s.CENTER);
+
+        chars.forEach((c) => {
+          // 1. STABILIZED SPATIAL SAMPLING from stablePresenceBuffer
+          let mx = s.floor(s.map(c.origX, s.width, 0, 0, 128)); 
+          let my = s.floor(s.map(c.origY, 0, s.height, 0, 96));
+          
+          let avgPresence = 0;
+          let weightSum = 0;
+          for (let ox = -1; ox <= 1; ox++) {
+            for (let oy = -1; oy <= 1; oy++) {
+              let nx = mx + ox;
+              let ny = my + oy;
+              if (nx >= 0 && nx < 128 && ny >= 0 && ny < 96) {
+                const weight = (ox === 0 && oy === 0) ? 2 : 1; 
+                avgPresence += stablePresenceBuffer[ny * 128 + nx] * weight;
+                weightSum += weight;
+              }
+            }
+          }
+          const rawPresence = avgPresence / weightSum;
+          // Temporal/Noise Threshold: strictly ignore low-confidence signals
+          const corpoPresence = rawPresence > 0.45 ? s.map(rawPresence, 0.45, 1, 0, 1) : 0;
+          
+          const index = (s.constrain(my, 0, 95) * 128 + s.constrain(mx, 0, 127));
+          const motionValue = motionPixels[index] || 0;
+          
+          // ABSOLUTE RULE: No motion means no response.
+          // motionIntensity is zeroed if it doesn't cross a significant threshold.
+          const displacementGating = motionValue > 0.12 ? s.map(motionValue, 0.12, 1, 0, 1) : 0;
+          
+          // Opacity revelation is still guided by stable presence
+          const revealFactor = s.constrain(corpoPresence * 1.8 + motionValue * 1.5, 0, 1);
+
+          // 2. THREE-STATE INTERACTION SYSTEM
+          let targetOffsetX = 0;
+          let targetOffsetY = 0;
+          let targetShadowBlur = 0;
+          let targetOpacity = 15;
+          let targetSize = baseFontSize;
+
+          // State Detection Logic
+          if (displacementGating > 0) {
+            // STATE 3: GESTURE (Expressive Deformation)
+            const noiseF = s.noise(c.origX * 0.005, c.origY * 0.005, s.frameCount * 0.01);
+            const angle = noiseF * s.TWO_PI;
+            // Strict displacement clamp to preserve grid integrity
+            const mag = s.constrain(displacementGating * 45, 0, 35);
+            targetOffsetX = s.cos(angle) * mag;
+            targetOffsetY = s.sin(angle) * mag;
+            
+            targetShadowBlur = 12 * displacementGating;
+            targetOpacity = s.map(revealFactor, 0, 1, 15, 255);
+            targetSize = baseFontSize + (displacementGating * 10);
+          } else if (corpoPresence > 0.05) {
+            // STATE 2: PRESENCE (Active Light Field)
+            // Physical offset remains ZERO to ensure absolute stability
+            targetShadowBlur = 6 * corpoPresence;
+            targetOpacity = s.map(corpoPresence, 0, 1, 15, 120);
+            targetSize = baseFontSize;
+          } else {
+            // STATE 1: REST (Static Typography)
+            // Default anchored state
+            targetSize = baseFontSize;
+          }
+
+          // Positional smoothing - returning to anchor or moving to gesture target
+          c.x = s.lerp(c.x, c.origX + targetOffsetX, 0.1);
+          c.y = s.lerp(c.y, c.origY + targetOffsetY, 0.1);
+
+          // 3. VISUAL RENDERING (NEON + DEPTH)
+          if (targetShadowBlur > 0) {
+            (s.drawingContext as any).shadowBlur = targetShadowBlur;
+            (s.drawingContext as any).shadowColor = '#00FF41';
+          } else {
+            (s.drawingContext as any).shadowBlur = 0;
+          }
+          
+          s.fill(0, targetOpacity);
+          s.textSize(targetSize);
+          s.text(c.char, c.x, c.y);
+          
+          // Reset shadow for next letter
+          (s.drawingContext as any).shadowBlur = 0;
+        });
+      };
+
+      const gerarLayoutTipografico = () => {
+        chars = [];
+        const words = textoVisto.split(' ');
+        const margin = 15;
+        
+        let currentX = margin;
+        let currentY = margin + baseFontSize * 0.8;
+        
+        s.textSize(baseFontSize);
+        
+        // Loop text over and over until the screen is full vertically
+        let wordIndex = 0;
+        while (currentY < s.height - margin * 0.5) {
+          const word = words[wordIndex % words.length];
+          // Calculate word width including the extra spacing we want
+          const spaceWidth = s.textWidth(' ') + wordSpacingExtra;
+          const wordWidth = s.textWidth(word) + spaceWidth;
+          
+          if (currentX + wordWidth > s.width - margin) {
+            currentX = margin;
+            currentY += baseFontSize * lineHeight;
+            if (currentY > s.height - margin * 0.5) break;
+          }
+          
+          for (let i = 0; i < word.length; i++) {
+            const char = word[i];
+            const charWidth = s.textWidth(char);
+            
+            chars.push({
+              char: char,
+              origX: currentX + charWidth / 2,
+              origY: currentY,
+              x: currentX + charWidth / 2,
+              y: currentY,
+            });
+            
+            currentX += charWidth * letterSpacingBase;
+          }
+          currentX += spaceWidth;
+          wordIndex++;
+        }
+
+        motionPixels = new Float32Array(128 * 96);
+      };
+
+      s.windowResized = () => {
+        const target = containerRef.current;
+        if (target) {
+          s.resizeCanvas(target.clientWidth, target.clientHeight);
+          gerarLayoutTipografico();
+        }
+      };
+    };
+
+    p5Instance.current = new p5(sketch);
+
+    return () => {
+      p5Instance.current?.remove();
+      p5Instance.current = null;
+    };
+  }, [isActive]);
+
+  return (
+    <div className="relative w-full max-w-4xl mx-auto group mt-20">
+      <div className="text-center mb-10">
+         <span className="text-[10px] text-[#00FF41] tracking-[0.3em] font-black uppercase opacity-60">
+            // PROTOCOLO_SOMÁTICO: TYPE_SYSTEM_15
+         </span>
+      </div>
+
+      <div className="absolute -inset-4 border-2 border-[#00FF41]/60 rounded-sm pointer-events-none transition-colors duration-700" />
+      
+      <div 
+        ref={containerRef}
+        className="aspect-video relative overflow-hidden bg-black shadow-[0_0_80px_rgba(0,255,65,0.4)] border-2 border-[#00FF41]/60 transition-all duration-700"
+      >
+        {!isActive && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm gap-6 p-8 text-center">
+             <motion.div
+               animate={{ opacity: [0.3, 1, 0.3] }}
+               transition={{ duration: 2, repeat: Infinity }}
+               className="text-[#00FF41] font-mono text-sm tracking-widest uppercase"
+             >
+                Permissão Necessária: Captura_Soma
+             </motion.div>
+             <button
+               onClick={() => setIsActive(true)}
+               className="px-8 py-3 border border-[#00FF41] text-[#00FF41] text-xs font-black uppercase tracking-[0.3em] hover:bg-[#00FF41] hover:text-black transition-all active:scale-95 flex items-center gap-3 group"
+             >
+                <Zap className="w-4 h-4 group-hover:animate-bounce" />
+                Ativar Captura de Fluxo
+             </button>
+             <p className="text-[9px] text-[#00FF41]/40 uppercase tracking-widest leading-relaxed max-w-xs">
+                O processamento ocorre localmente. Sua imagem não é transmitida ou armazenada.
+             </p>
+          </div>
+        )}
+
+        {isActive && isSystemLoading && (
+          <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4">
+             <div className="w-12 h-12 border-2 border-[#00FF41]/20 border-t-[#00FF41] rounded-full animate-spin" />
+             <span className="text-[10px] text-[#00FF41] uppercase tracking-[0.5em] animate-pulse">Sincronizando_Sistemas...</span>
+          </div>
+        )}
+        
+        {isActive && !isSystemLoading && (
+          <>
+             <div className="absolute inset-0 pointer-events-none z-10 scanlines opacity-30" />
+             <div className="absolute inset-0 pointer-events-none z-10 noise-overlay opacity-10" />
+          </>
+        )}
+      </div>
+
+      <div className="mt-4 flex justify-between items-center px-2">
+        <div className="flex gap-2 items-center">
+           <Monitor className="w-3 h-3 text-[#00FF41]/50" />
+           <span className="text-[8px] text-[#00FF41]/40 tracking-widest font-black uppercase">
+             Monitor_Somatico // Out_0x15
+           </span>
+        </div>
+        <div className="flex items-center gap-4">
+           <div className={`w-1.5 h-1.5 rounded-full ${isActive && !isSystemLoading ? 'bg-[#00FF41] animate-pulse shadow-[0_0_8px_#00FF41]' : 'bg-white/10'}`} />
+           <span className="text-[8px] text-[#00FF41]/60 uppercase tracking-widest">
+             {isActive ? (isSystemLoading ? 'Inicializando...' : 'Link_Estabelecido') : 'Aguardando_Input'}
+           </span>
+        </div>
       </div>
     </div>
   );
@@ -1715,9 +2065,9 @@ export default function App() {
         />
       </div>
 
-      <div className="relative z-20 min-h-screen w-full flex flex-col md:grid md:grid-cols-[280px_1fr_300px] md:grid-rows-[120px_1fr_auto] border border-[#00FF41]/30">
+      <div className="relative z-20 min-h-screen w-full flex flex-col md:grid md:grid-cols-[280px_1fr_300px] md:grid-rows-[160px_1fr_auto] border border-[#00FF41]/30">
         {/* LOGO AREA */}
-        <div className="w-full md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 border-b-2 border-[#00FF41] flex items-center justify-between md:justify-center p-6 bg-[#00FF41]/5">
+        <div className="w-full md:col-start-1 md:col-end-2 md:row-start-1 md:row-end-2 border-b-2 border-[#00FF41] flex items-center justify-between md:justify-center p-0 md:p-6 bg-[#00FF41]/5">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{
@@ -1733,16 +2083,17 @@ export default function App() {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="text-[32px] md:text-5xl font-black text-[#00FF41] tracking-[-0.05em] drop-shadow-[0_0_20px_rgba(0,255,65,0.5)]"
+            className="pl-6 md:pl-0 text-[32px] md:text-5xl font-black text-[#00FF41] tracking-[-0.05em] drop-shadow-[0_0_20px_rgba(0,255,65,0.5)]"
           >
             <ScrambleTitle text="VISTO_LAB" />
           </motion.div>
 
-          <div className="md:hidden flex items-center gap-4">
-            <div className="w-2 h-2 bg-[#00FF41] animate-pulse" />
-            <span className="text-[9px] uppercase tracking-widest text-[#00FF41]">
-              Sistema Ativo
-            </span>
+          <div className="md:hidden flex items-center h-full">
+            <img
+              src="https://lab.visto.art.br/favicon.jpg"
+              alt="VISTO Logo"
+              className="h-24 w-24 object-contain brightness-125 drop-shadow-[0_0_20px_rgba(0,255,65,0.5)] animate-pulse"
+            />
           </div>
         </div>
 
@@ -1754,20 +2105,12 @@ export default function App() {
         </div>
 
         {/* STATUS & FAVICON AREA (RIGHT) */}
-        <div className="hidden md:flex col-start-3 col-end-4 row-start-1 row-end-2 border-b border-[#00FF41] items-center justify-end px-12 bg-[#00FF41]/10">
-          <div className="flex items-center gap-12">
-            <div className="flex flex-col items-end">
-              <span className="text-xs md:text-sm text-[#00FF41] font-black uppercase tracking-widest animate-pulse border-r-4 border-[#00FF41] pr-3 mb-1">
-                Status: Online
-              </span>
-              <span className="text-xs md:text-sm text-white/80 uppercase font-mono tracking-tight">
-                Protocolo_V.4.0.1
-              </span>
-            </div>
+        <div className="hidden md:flex col-start-3 col-end-4 row-start-1 row-end-2 border-b border-[#00FF41] items-center justify-end bg-[#00FF41]/10 overflow-hidden">
+          <div className="flex items-center h-full">
             <img
-              src="https://raw.githubusercontent.com/1projetovisto-web/visto_lab_landing/main/public/favicon.png"
+              src="https://lab.visto.art.br/favicon.jpg"
               alt="VISTO Logo"
-              className="w-20 h-20 object-contain brightness-150 drop-shadow-[0_0_25px_rgba(0,255,65,0.4)] animate-pulse"
+              className="h-full w-auto object-contain brightness-150 drop-shadow-[0_0_45px_rgba(0,255,65,0.8)] animate-pulse border-l border-[#00FF41]/40"
             />
           </div>
         </div>
@@ -1871,6 +2214,8 @@ export default function App() {
                   // Ruptura_Somática 0x4f2 // VISTO_LAB
                 </p>
               </motion.div>
+
+              <SomaticTypeMonitor />
             </div>
           </section>
 
